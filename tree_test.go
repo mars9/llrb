@@ -196,7 +196,7 @@ func TestRandomlyInsertedGet(t *testing.T) {
 	}
 }
 
-func TestRandomInsertionAndDeltion(t *testing.T) {
+func TestRandomInsertionAndDeletion(t *testing.T) {
 	count, max := 100000, 1000
 	tree := &Tree{}
 	r := map[compRune]struct{}{}
