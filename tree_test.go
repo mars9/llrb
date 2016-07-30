@@ -9,6 +9,7 @@ package llrb
 
 import (
 	"math/rand"
+	"reflect"
 	"testing"
 )
 
@@ -39,17 +40,39 @@ func (t *Tree) isBST() bool {
 	return t.root.isBST(t.Min(), t.Max())
 }
 
-/*
 func TestNilOperation(t *testing.T) {
 	tree := &Tree{}
 	if tree.Min() != nil {
+		t.Fatalf("expected <nil> value, got %v", tree.Min())
 	}
 	if tree.Max() != nil {
+		t.Fatalf("expected <nil> value, got %v", tree.Max())
 	}
-	//tree.DeleteMin()
-	//tree.DeleteMax()
+
+	txn := tree.Txn()
+	txn.DeleteMin()
+	if !reflect.DeepEqual(tree, txn.Commit()) {
+		t.Fatalf("expected empty tree, got %#v", txn.Commit())
+	}
+
+	txn = tree.Txn()
+	txn.DeleteMax()
+	if !reflect.DeepEqual(tree, txn.Commit()) {
+		t.Fatalf("expected empty tree, got %#v", txn.Commit())
+	}
+
+	if tree.Get(Int(42)) != nil {
+		t.Fatalf("expected <nil> value, got %v", tree.Get(Int(42)))
+	}
+	if txn.Get(Int(42)) != nil {
+		t.Fatalf("expected <nil> value, got %v", txn.Get(Int(42)))
+	}
+
+	txn.Delete(Int(42))
+	if !reflect.DeepEqual(tree, txn.Commit()) {
+		t.Fatalf("expected empty tree, got %#v", txn.Commit())
+	}
 }
-*/
 
 func TestInsertion(t *testing.T) {
 	min, max := compRune(0), compRune(1000)
@@ -169,6 +192,92 @@ func TestRandomlyInsertedGet(t *testing.T) {
 			if tree.Get(i) != nil {
 				t.Errorf("get: unexpected elem found %v", tree.Get(i))
 			}
+		}
+	}
+}
+
+func TestRandomInsertionAndDeltion(t *testing.T) {
+	count, max := 100000, 1000
+	tree := &Tree{}
+	r := map[compRune]struct{}{}
+	for i := 0; i < count; i++ {
+		txn := tree.Txn()
+		v := compRune(rand.Intn(max))
+		r[v] = struct{}{}
+		txn.Insert(v)
+		tree = txn.Commit()
+
+		if !tree.isBST() {
+			t.Fatalf("random insertion and deletion: tree is not a BST")
+		}
+		if !tree.isBalanced() {
+			t.Fatalf("random insertion and deletion: tree is not balanced")
+		}
+		if !tree.is23() {
+			t.Fatalf("random insertion and deletion: tree is not a 2-3 tree")
+		}
+	}
+
+	for v := range r {
+		txn := tree.Txn()
+		txn.Delete(v)
+		tree = txn.Commit()
+
+		if !tree.isBST() {
+			t.Fatalf("random insertion and deletion: tree is not a BST")
+		}
+		if !tree.isBalanced() {
+			t.Fatalf("random insertion and deletion: tree is not balanced")
+		}
+		if !tree.is23() {
+			t.Fatalf("random insertion and deletion: tree is not a 2-3 tree")
+		}
+	}
+
+	if tree.Len() != 0 {
+		t.Fatalf("random insertion and deletion: expected empty tree, have %d", tree.Len())
+	}
+}
+
+func TestDeleteMinMax(t *testing.T) {
+	min, max := compRune(0), compRune(10)
+	tree := &Tree{}
+	txn := tree.Txn()
+	for i := min; i <= max; i++ {
+		txn.Insert(i)
+	}
+	tree = txn.Commit()
+	if tree.Len() != int(max-min+1) {
+		t.Fatalf("delete min/max: expected tree length %d, have %d", int(max-min+1), tree.Len())
+	}
+
+	for i, m := 0, int(max); i < m/2; i++ {
+		txn = tree.Txn()
+		txn.DeleteMin()
+		tree = txn.Commit()
+
+		if !tree.isBST() {
+			t.Fatalf("delete min/max: tree is not a BST")
+		}
+		if !tree.isBalanced() {
+			t.Fatalf("delete min/max: tree is not balanced")
+		}
+		if !tree.is23() {
+			t.Fatalf("delete min/max: tree is not a 2-3 tree")
+		}
+
+		txn = tree.Txn()
+		txn.DeleteMax()
+		tree = txn.Commit()
+
+		if !tree.isBST() {
+			t.Fatalf("delete min/max: tree is not a BST")
+		}
+		if !tree.isBalanced() {
+			t.Fatalf("delete min/max: tree is not balanced")
+		}
+		if !tree.is23() {
+			t.Fatalf("delete min/max: tree is not a 2-3 tree")
 		}
 	}
 }
