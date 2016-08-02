@@ -1,4 +1,4 @@
-# LLRB
+# LLRB [![GoDoc](https://godoc.org/github.com/mars9/llrb?status.svg)](https://godoc.org/github.com/mars9/llrb)
 
 Package llrb implements an immutable Left-Leaning Red-Black tree as
 described by Robert Sedgewick. More details relating to the
