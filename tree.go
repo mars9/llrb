@@ -18,7 +18,7 @@
 // Immutability is achieved by branch copying.
 package llrb
 
-// Tree manages the root node of an eft-Leaning Red-Black  tree. Public
+// Tree manages the root node of an left-Leaning Red-Black  tree. Public
 // methods are exposed through this type.
 type Tree struct {
 	root *node
